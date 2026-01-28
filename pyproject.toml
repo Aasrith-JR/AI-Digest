@@ -1,0 +1,20 @@
+[project]
+name = "ai-intelligence-digest"
+version = "0.1.0"
+dependencies = [
+    "aiosqlite",
+    "httpx",
+    "python-dotenv",
+    "pydantic",
+    "feedparser",
+    "faiss-cpu",
+    "numpy",
+    "python-telegram-bot",
+    "aiosmtplib"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

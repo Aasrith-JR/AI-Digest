@@ -1,0 +1,27 @@
+# Core
+DATABASE_PATH: "data/app.db"
+FAISS_INDEX_PATH: "data/faiss.index"
+
+# Ollama
+OLLAMA_BASE_URL: http://localhost:11434/v1
+OLLAMA_MODEL: llama3:8b
+
+# Personas
+PERSONA_GENAI_NEWS_ENABLED: "true"
+PERSONA_PRODUCT_IDEAS_ENABLED: "true"
+
+# Thresholds
+GENAI_NEWS_MIN_RELEVANCE: 0.4
+PRODUCT_IDEAS_MIN_REUSABILITY: 0.5
+
+# Telegram Delivery
+TELEGRAM_ENABLED: "false"
+
+#Email Delivery
+EMAIL_ENABLED: "true"
+
+EMAIL_SMTP_HOST: smtp.gmail.com
+EMAIL_SMTP_PORT: 587
+
+EMAIL_FROM: cosmicnebula25@gmail.com
+EMAIL_TO: cosmicnebula2004@gmail.com
