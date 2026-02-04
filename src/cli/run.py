@@ -5,8 +5,11 @@ import time
 
 from services.config import load_config
 from services.logging import setup_logging
-from workflows.genai_news import GenAINewsPipeline
-from workflows.product_ideas import ProductIdeasPipeline
+from services.database import Database
+from services.vector_store import VectorStore
+from services.digest_tracker import DigestTracker
+from services.llm import OllamaClient
+from workflows.pipeline_factory import create_pipelines_from_config
 from delivery.file_delivery import FileDelivery
 from delivery.email_delivery import EmailDelivery
 from delivery.telegram_delivery import TelegramDelivery
@@ -23,13 +26,40 @@ async def main() -> None:
 
     logger.info("Starting intelligence digest run")
 
-    pipelines = []
+    # ----------------------------
+    # Initialize shared services
+    # ----------------------------
+    llm = OllamaClient(
+        base_url=config.OLLAMA_BASE_URL,
+        model=config.OLLAMA_MODEL,
+    )
 
-    if config.PERSONA_GENAI_NEWS_ENABLED:
-        pipelines.append(GenAINewsPipeline())
+    db = Database(config.DATABASE_PATH)
+    vector_store = VectorStore(config.FAISS_INDEX_PATH)
+    tracker = DigestTracker(db, vector_store)
 
-    if config.PERSONA_PRODUCT_IDEAS_ENABLED:
-        pipelines.append(ProductIdeasPipeline())
+    # ----------------------------
+    # Create pipelines from config
+    # ----------------------------
+    if config.pipelines:
+        # Use new modular pipeline configuration
+        pipelines = create_pipelines_from_config(
+            pipelines_config=config.pipelines,
+            llm=llm,
+            tracker=tracker,
+        )
+        logger.info(f"Created {len(pipelines)} pipelines from config")
+    else:
+        # Fallback to legacy pipeline configuration
+        logger.warning("No pipelines configured, using legacy configuration")
+        from workflows.genai_news import GenAINewsPipeline
+        from workflows.product_ideas import ProductIdeasPipeline
+
+        pipelines = []
+        if config.PERSONA_GENAI_NEWS_ENABLED:
+            pipelines.append(GenAINewsPipeline(llm=llm, tracker=tracker))
+        if config.PERSONA_PRODUCT_IDEAS_ENABLED:
+            pipelines.append(ProductIdeasPipeline(llm=llm, tracker=tracker))
 
     # ----------------------------
     # Initialize delivery channels

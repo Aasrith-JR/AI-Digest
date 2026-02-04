@@ -56,7 +56,7 @@ class EmailDelivery(DeliveryChannel):
 
         # Build entry cards
         entry_cards = []
-        for idx, entry in enumerate(entries, 1):
+        for entry in entries:
 
             # Build source links
             source_links = "".join(
@@ -76,15 +76,8 @@ class EmailDelivery(DeliveryChannel):
                         box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
                         border-left: 4px solid {c['primary']};">
                 
-                <!-- Header with number and title -->
-                <div style="display: flex; align-items: flex-start; margin-bottom: 16px;">
-                    <span style="background-color: {c['primary']}; color: white; 
-                                 font-weight: bold; font-size: 14px; 
-                                 width: 28px; height: 28px; border-radius: 50%; 
-                                 display: inline-block; text-align: center; 
-                                 line-height: 28px; margin-right: 12px; flex-shrink: 0;">
-                        {idx}
-                    </span>
+                <!-- Header with title -->
+                <div style="margin-bottom: 16px;">
                     <h2 style="margin: 0; color: {c['text_primary']}; font-size: 18px; 
                                font-weight: 600; line-height: 1.4;">
                         {html_escape.escape(entry.title)}

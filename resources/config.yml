@@ -6,11 +6,7 @@ FAISS_INDEX_PATH: "data/faiss.index"
 OLLAMA_BASE_URL: http://localhost:11434/v1
 OLLAMA_MODEL: llama3.1:8b
 
-# Personas
-PERSONA_GENAI_NEWS_ENABLED: "true"
-PERSONA_PRODUCT_IDEAS_ENABLED: "true"
-
-# Thresholds
+# Thresholds (legacy - now configured per-pipeline)
 GENAI_NEWS_MIN_RELEVANCE: 0.4
 PRODUCT_IDEAS_MIN_REUSABILITY: 0.5
 
@@ -40,11 +36,96 @@ email_colors:
 
 
 
-# Ingestion Sources Configuration
-# Each source has: type, enabled, and type-specific settings
+# ============================================
+# PIPELINES CONFIGURATION
+# ============================================
+# Each pipeline is fully self-contained and modular.
+# Add new pipelines by creating a new entry under 'pipelines:'
+#
+# Pipeline fields:
+#   enabled: true/false - whether to run this pipeline
+#   persona: GENAI_NEWS or PRODUCT_IDEAS (must match ALL_PERSONAS)
+#   fetch_hours: how far back to fetch items (default: 24)
+#   default_audience: fallback audience value
+#   score_field: which evaluation field to use for scoring
+#   why_it_matters_field: field(s) for why_it_matters (string or list)
+#   why_it_matters_fallback: fallback text if field is empty
+#   ingestion: sources, keywords, min_engagement, top_k
+
+pipelines:
+  genai_news:
+    enabled: true
+    persona: GENAI_NEWS
+    fetch_hours: 24
+    default_audience: developer
+    score_field: relevance_score
+    why_it_matters_field: why_it_matters
+    why_it_matters_fallback: "Relevant update in the GenAI ecosystem."
+    ingestion:
+      top_k: 5
+      sources:
+        - type: reddit
+          enabled: true
+          subreddit: MachineLearning
+        - type: reddit
+          enabled: true
+          subreddit: LocalLLaMA
+        - type: rss
+          enabled: true
+          name: genai_rss
+          feeds:
+            - https://www.lesswrong.com/feed.xml
+            - https://www.semianalysis.com/feed
+        - type: hackernews
+          enabled: false
+      keywords:
+        - llm
+        - transformer
+        - inference
+        - quantization
+        - agents
+        - ollama
+        - faiss
+        - gpu
+      min_engagement: 5
+
+  product_ideas:
+    enabled: true
+    persona: PRODUCT_IDEAS
+    fetch_hours: 24
+    default_audience: founder
+    score_field: reusability_score
+    why_it_matters_field:
+      - problem_statement
+      - solution_summary
+    why_it_matters_fallback: "Potential product opportunity."
+    ingestion:
+      top_k: 5
+      sources:
+        - type: producthunt
+          enabled: true
+        - type: reddit
+          enabled: true
+          subreddit: SideProject
+      keywords:
+        - launched
+        - built
+        - mvp
+        - experiment
+        - users
+        - revenue
+        - problem
+        - pain
+      min_engagement: 3
+
+
+# ============================================
+# LEGACY INGESTION (kept for backwards compatibility)
+# ============================================
+# You can still use this format, but 'pipelines' section above is preferred.
 ingestion:
   genai_news:
-    top_k: 5  # Number of top digests to select
+    top_k: 5
     sources:
       - type: reddit
         enabled: true
@@ -59,7 +140,7 @@ ingestion:
           - https://www.lesswrong.com/feed.xml
           - https://www.semianalysis.com/feed
       - type: hackernews
-        enabled: true
+        enabled: false
     keywords:
       - llm
       - transformer
@@ -72,7 +153,7 @@ ingestion:
     min_engagement: 5
 
   product_ideas:
-    top_k: 5  # Number of top digests to select
+    top_k: 5
     sources:
       - type: producthunt
         enabled: true

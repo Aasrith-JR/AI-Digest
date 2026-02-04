@@ -27,6 +27,39 @@ class IngestionConfig(BaseModel):
     top_k: int = 5  # Number of top digests to select
 
 
+class PipelineConfig(BaseModel):
+    """
+    Complete configuration for a single pipeline.
+    Defines everything needed to run a digest pipeline.
+    """
+    name: str  # Unique pipeline name
+    enabled: bool = True
+    persona_name: str  # Reference to persona in ALL_PERSONAS
+    ingestion: IngestionConfig
+    fetch_hours: int = 24
+    default_audience: str = "developer"
+    score_field: str = "relevance_score"  # Field name in evaluation for scoring
+    why_it_matters_field: Any = "why_it_matters"  # Field(s) to use for why_it_matters
+    why_it_matters_fallback: str = "Relevant update."
+
+    # Resolved at runtime
+    _persona: Any = None
+
+    @property
+    def persona(self):
+        """Lazy-load the Persona object from ALL_PERSONAS."""
+        if self._persona is None:
+            from core.personas import ALL_PERSONAS
+            if self.persona_name not in ALL_PERSONAS:
+                raise ValueError(f"Unknown persona: {self.persona_name}")
+            self._persona = ALL_PERSONAS[self.persona_name]
+        return self._persona
+
+    class Config:
+        # Allow private attributes
+        underscore_attrs_are_private = True
+
+
 class EmailColorsConfig(BaseModel):
     """Configuration for email template colors."""
     primary: str = "#6366f1"
@@ -73,9 +106,12 @@ class Config(BaseModel):
     TELEGRAM_BOT_TOKEN: Optional[str] = None
     TELEGRAM_CHAT_ID: Optional[str] = None
 
-    # Ingestion configurations
+    # Ingestion configurations (legacy - for backwards compatibility)
     ingestion_genai_news: Optional[IngestionConfig] = None
     ingestion_product_ideas: Optional[IngestionConfig] = None
+
+    # New modular pipeline configurations
+    pipelines: List[PipelineConfig] = []
 
 
 def _bool(value: str | bool) -> bool:
@@ -120,6 +156,24 @@ def _parse_ingestion_config(data: Dict[str, Any]) -> IngestionConfig:
     )
 
 
+def _parse_pipeline_config(name: str, data: Dict[str, Any]) -> PipelineConfig:
+    """Parse a single pipeline configuration from YAML data."""
+    ingestion_data = data.get("ingestion", {})
+    ingestion = _parse_ingestion_config(ingestion_data)
+
+    return PipelineConfig(
+        name=name,
+        enabled=_bool(data.get("enabled", True)),
+        persona_name=data.get("persona", name.upper()),
+        ingestion=ingestion,
+        fetch_hours=data.get("fetch_hours", 24),
+        default_audience=data.get("default_audience", "developer"),
+        score_field=data.get("score_field", "relevance_score"),
+        why_it_matters_field=data.get("why_it_matters_field", "why_it_matters"),
+        why_it_matters_fallback=data.get("why_it_matters_fallback", "Relevant update."),
+    )
+
+
 def load_config() -> Config:
     """Load configuration from config.yml and email credentials from .env."""
     # Load .env for sensitive credentials
@@ -140,6 +194,17 @@ def load_config() -> Config:
 
     if "product_ideas" in ingestion:
         ingestion_product_ideas = _parse_ingestion_config(ingestion["product_ideas"])
+
+    # Parse new modular pipelines configuration
+    pipelines = []
+    pipelines_config = config.get("pipelines", {})
+    for pipeline_name, pipeline_data in pipelines_config.items():
+        try:
+            pipeline_config = _parse_pipeline_config(pipeline_name, pipeline_data)
+            pipelines.append(pipeline_config)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Failed to parse pipeline '{pipeline_name}': {e}")
 
     return Config(
         DATABASE_PATH=config.get("DATABASE_PATH", "data/app.db"),
@@ -169,6 +234,7 @@ def load_config() -> Config:
 
         ingestion_genai_news=ingestion_genai_news,
         ingestion_product_ideas=ingestion_product_ideas,
+        pipelines=pipelines,
     )
 
 

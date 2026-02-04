@@ -79,7 +79,10 @@ async def evaluate_batch(
     if not items:
         return []
 
-    logger.info(f"Evaluating {len(items)} items in a single LLM call, selecting top {top_k}")
+    logger.info(f"Evaluating {len(items)} items and selecting top {top_k}")
+
+    # If fewer items than top_k, only request what we have
+    actual_k = min(len(items), top_k)
 
     # Build compact items list - only titles and short content to fit in context
     items_text = ""
@@ -90,12 +93,12 @@ async def evaluate_batch(
 
     # Build prompt based on persona
     if persona.name == "GENAI_NEWS":
-        prompt = f"""You are a GenAI/ML news curator. Analyze these {len(items)} items and select the TOP {top_k} most relevant for developers.
+        prompt = f"""You are a GenAI/ML news curator. Analyze these {len(items)} items and select the TOP {actual_k} most relevant for developers.
 
 ITEMS:
 {items_text}
 
-For each of the TOP {top_k} items, provide a JSON object with:
+For each of the TOP {actual_k} items, provide a JSON object with:
 - id: the item ID (must match exactly)
 - relevance_score: float 0.0-1.0
 - topic: category (LLM, Inference, Training, Agents, Tools, etc.)
@@ -103,17 +106,17 @@ For each of the TOP {top_k} items, provide a JSON object with:
 - target_audience: "developer", "architect", or "manager"
 - decision: "include"
 
-Return ONLY a JSON array with exactly {top_k} items, sorted by relevance (highest first).
+Return ONLY a JSON array with AT MOST {actual_k} items, sorted by relevance (highest first). Do NOT duplicate items.
 Example: [{{"id": "0", "relevance_score": 0.9, "topic": "LLM", "why_it_matters": "...", "target_audience": "developer", "decision": "include"}}]
 
 JSON array:"""
     else:  # PRODUCT_IDEAS
-        prompt = f"""You are a product ideas curator. Analyze these {len(items)} items and select the TOP {top_k} most valuable for founders/builders.
+        prompt = f"""You are a product ideas curator. Analyze these {len(items)} items and select the TOP {actual_k} most valuable for founders/builders.
 
 ITEMS:
 {items_text}
 
-For each of the TOP {top_k} items, provide a JSON object with:
+For each of the TOP {actual_k} items, provide a JSON object with:
 - id: the item ID (must match exactly)
 - idea_type: category (SaaS, Tool, Platform, API, Mobile App, etc.)
 - problem_statement: 1 sentence about the problem
@@ -122,7 +125,7 @@ For each of the TOP {top_k} items, provide a JSON object with:
 - reusability_score: float 0.0-1.0
 - decision: "include"
 
-Return ONLY a JSON array with exactly {top_k} items, sorted by reusability (highest first).
+Return ONLY a JSON array with AT MOST {actual_k} items, sorted by reusability (highest first). Do NOT duplicate items.
 Example: [{{"id": "0", "idea_type": "SaaS", "problem_statement": "...", "solution_summary": "...", "maturity_level": "mvp", "reusability_score": 0.8, "decision": "include"}}]
 
 JSON array:"""
@@ -148,8 +151,15 @@ JSON array:"""
         raise ValueError(f"Invalid JSON response from LLM: {e}")
 
     results = []
+    seen_ids = set()  # Track IDs to prevent duplicates
+
     for parsed_item in parsed_list:
         item_id = str(parsed_item.get("id", ""))
+
+        # Skip duplicates
+        if item_id in seen_ids:
+            logger.warning(f"Skipping duplicate item {item_id}")
+            continue
 
         # Validate against schema
         try:
@@ -161,6 +171,7 @@ JSON array:"""
                 "parsed": parsed_dict,
                 "decision": "include",
             })
+            seen_ids.add(item_id)
             logger.info(f"Selected item {item_id} for inclusion")
         except Exception as e:
             logger.warning(f"Validation failed for item {item_id}: {e}")
@@ -170,6 +181,7 @@ JSON array:"""
                 "parsed": parsed_item,
                 "decision": "include",
             })
+            seen_ids.add(item_id)
 
     logger.info(f"Evaluation complete: {len(results)} items selected")
-    return results[:top_k]  # Ensure we return at most top_k
+    return results[:actual_k]  # Ensure we return at most actual_k (never more than available items)
