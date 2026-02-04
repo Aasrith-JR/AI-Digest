@@ -24,13 +24,27 @@ EMAIL_SMTP_PORT: 587
 EMAIL_FROM: cosmicnebula25@gmail.com
 EMAIL_TO: cosmicnebula2004@gmail.com
 
+# Email Template Colors (customize your email appearance)
+email_colors:
+  primary: "#00F6FF"           # Cyan - Main accent color (header, badges, links)
+  primary_dark: "#0047FF"      # Deep blue - Darker shade for gradients
+  secondary: "#B896FF"         # Purple - Secondary accent (fallback badge color)
+  background: "#060606"        # Near black - Page background
+  card_bg: "#060606"           # Near black - Card background
+  text_primary: "#FBFAFA"      # Off white - Main text color
+  text_secondary: "#7BA8FF"    # Light blue - Secondary text (footer, meta)
+  border: "#0047FF"            # Deep blue - Border color
+  accent: "#00FFF0"            # Bright cyan - Highlight accent (why it matters border)
+  why_it_matters_bg: "#060606" # Near black - Why it matters box background
+  why_it_matters_text: "#00FFF0" # Bright cyan - Why it matters text color
+
 
 
 # Ingestion Sources Configuration
 # Each source has: type, enabled, and type-specific settings
 ingestion:
   genai_news:
-    top_k: 3  # Number of top digests to select
+    top_k: 5  # Number of top digests to select
     sources:
       - type: reddit
         enabled: true
@@ -58,7 +72,7 @@ ingestion:
     min_engagement: 5
 
   product_ideas:
-    top_k: 3  # Number of top digests to select
+    top_k: 5  # Number of top digests to select
     sources:
       - type: producthunt
         enabled: true

@@ -27,6 +27,21 @@ class IngestionConfig(BaseModel):
     top_k: int = 5  # Number of top digests to select
 
 
+class EmailColorsConfig(BaseModel):
+    """Configuration for email template colors."""
+    primary: str = "#6366f1"
+    primary_dark: str = "#4f46e5"
+    secondary: str = "#10b981"
+    background: str = "#f8fafc"
+    card_bg: str = "#ffffff"
+    text_primary: str = "#1e293b"
+    text_secondary: str = "#64748b"
+    border: str = "#e2e8f0"
+    accent: str = "#f59e0b"
+    why_it_matters_bg: str = "#fef3c7"
+    why_it_matters_text: str = "#92400e"
+
+
 class Config(BaseModel):
     # Core
     DATABASE_PATH: str
@@ -51,6 +66,7 @@ class Config(BaseModel):
     EMAIL_PASSWORD: Optional[str] = None
     EMAIL_FROM: Optional[str] = None
     EMAIL_TO: Optional[str] = None
+    email_colors: EmailColorsConfig = EmailColorsConfig()
 
     # Telegram
     TELEGRAM_ENABLED: bool = False
@@ -145,6 +161,7 @@ def load_config() -> Config:
         EMAIL_PASSWORD=os.getenv("EMAIL_PASSWORD"),
         EMAIL_FROM=config.get("EMAIL_FROM"),
         EMAIL_TO=config.get("EMAIL_TO"),
+        email_colors=EmailColorsConfig(**config.get("email_colors", {})),
 
         TELEGRAM_ENABLED=_bool(config.get("TELEGRAM_ENABLED", False)),
         TELEGRAM_BOT_TOKEN=os.getenv("TELEGRAM_BOT_TOKEN"),

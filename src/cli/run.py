@@ -45,6 +45,7 @@ async def main() -> None:
                 password=config.EMAIL_PASSWORD,
                 sender=config.EMAIL_FROM,
                 recipient=config.EMAIL_TO,
+                colors=config.email_colors.model_dump(),
             )
         )
 
