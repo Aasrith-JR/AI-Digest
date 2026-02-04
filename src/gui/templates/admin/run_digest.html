@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Run Digest - AI-Digest Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 mb-4">
+            <div class="card">
+                <div class="card-body p-2">
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>Overview
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">
+                            <i class="bi bi-people me-2"></i>Users
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_pipelines') }}">
+                            <i class="bi bi-gear me-2"></i>Pipelines
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_config') }}">
+                            <i class="bi bi-sliders me-2"></i>Configuration
+                        </a>
+                        <a class="nav-link active" href="{{ url_for('admin_run_digest') }}">
+                            <i class="bi bi-play-circle me-2"></i>Run Digest
+                        </a>
+                        <hr class="my-2">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-arrow-left me-2"></i>Back to App
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-10">
+            <h2 class="mb-4">
+                <i class="bi bi-play-circle text-primary me-2"></i>Run Digest Manually
+            </h2>
+
+            <div class="row g-4">
+                <!-- Run Form -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-rocket me-2"></i>Start Digest Run
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('admin_run_digest') }}" id="runForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Pipeline</label>
+                                    <select name="persona" class="form-select">
+                                        <option value="">All Pipelines</option>
+                                        {% for name, pipeline in pipelines.items() %}
+                                            <option value="{{ name }}" {% if not pipeline.get('enabled', True) %}disabled{% endif %}>
+                                                {{ name.replace('_', ' ').title() }}
+                                                {% if not pipeline.get('enabled', True) %}(Disabled){% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text text-secondary">
+                                        Select a specific pipeline or run all enabled pipelines.
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Note:</strong> Running a digest will:
+                                    <ul class="mb-0 mt-2">
+                                        <li>Fetch content from configured sources</li>
+                                        <li>Process and evaluate items using LLM</li>
+                                        <li>Send emails to all subscribed users</li>
+                                        <li>Save output files to the output directory</li>
+                                    </ul>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" id="runBtn">
+                                    <i class="bi bi-play-fill me-2"></i>Run Digest
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Panel -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-activity me-2"></i>Recent Runs
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="taskStatus">
+                                <div class="text-center py-4 text-secondary">
+                                    <i class="bi bi-clock-history" style="font-size: 2rem;"></i>
+                                    <p class="mt-2 mb-0">No recent runs</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Status -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list-check me-2"></i>Pipeline Status
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Pipeline</th>
+                                            <th>Status</th>
+                                            <th>Top K</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for name, pipeline in pipelines.items() %}
+                                            <tr>
+                                                <td>{{ name.replace('_', ' ').title() }}</td>
+                                                <td>
+                                                    {% if pipeline.get('enabled', True) %}
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-check me-1"></i>Enabled
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">
+                                                            <i class="bi bi-pause me-1"></i>Disabled
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ pipeline.get('ingestion', {}).get('top_k', 5) }}</td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3" class="text-center text-secondary">
+                                                    No pipelines configured
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requirements Check -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-check-square me-2"></i>Requirements Check
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 border rounded">
+                                <i class="bi bi-cpu text-primary me-3" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <strong>Ollama</strong>
+                                    <p class="text-secondary mb-0 small">LLM must be running</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 border rounded">
+                                <i class="bi bi-envelope text-primary me-3" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <strong>Email</strong>
+                                    <p class="text-secondary mb-0 small">SMTP configured</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 border rounded">
+                                <i class="bi bi-people text-primary me-3" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <strong>Subscribers</strong>
+                                    <p class="text-secondary mb-0 small">Users must be subscribed</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form submission with loading state
+    document.getElementById('runForm').addEventListener('submit', function() {
+        const btn = document.getElementById('runBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Running...';
+    });
+</script>
+{% endblock %}

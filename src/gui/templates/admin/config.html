@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration - AI-Digest Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 mb-4">
+            <div class="card">
+                <div class="card-body p-2">
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>Overview
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">
+                            <i class="bi bi-people me-2"></i>Users
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_pipelines') }}">
+                            <i class="bi bi-gear me-2"></i>Pipelines
+                        </a>
+                        <a class="nav-link active" href="{{ url_for('admin_config') }}">
+                            <i class="bi bi-sliders me-2"></i>Configuration
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_run_digest') }}">
+                            <i class="bi bi-play-circle me-2"></i>Run Digest
+                        </a>
+                        <hr class="my-2">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-arrow-left me-2"></i>Back to App
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-10">
+            <h2 class="mb-4">
+                <i class="bi bi-sliders text-primary me-2"></i>Configuration Settings
+            </h2>
+
+            <!-- Email Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-envelope me-2"></i>Email Delivery Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_config') }}">
+                        <input type="hidden" name="action" value="update_email_settings">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email Delivery</label>
+                                <select name="email_enabled" class="form-select">
+                                    <option value="true" {% if config.get('EMAIL_ENABLED') == 'true' or config.get('EMAIL_ENABLED') == True %}selected{% endif %}>Enabled</option>
+                                    <option value="false" {% if config.get('EMAIL_ENABLED') == 'false' or config.get('EMAIL_ENABLED') == False %}selected{% endif %}>Disabled</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">SMTP Host</label>
+                                <input type="text" name="smtp_host" class="form-control"
+                                       value="{{ config.get('EMAIL_SMTP_HOST', '') }}" placeholder="smtp.gmail.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">SMTP Port</label>
+                                <input type="number" name="smtp_port" class="form-control"
+                                       value="{{ config.get('EMAIL_SMTP_PORT', 587) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">From Email</label>
+                                <input type="email" name="email_from" class="form-control"
+                                       value="{{ config.get('EMAIL_FROM', '') }}" placeholder="noreply@example.com">
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Note:</strong> Email username and password should be set in the <code>.env</code> file as
+                            <code>EMAIL_USERNAME</code> and <code>EMAIL_PASSWORD</code> for security.
+                        </div>
+
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="bi bi-check-circle me-1"></i>Save Email Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Email Colors -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-palette me-2"></i>Email Template Colors
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_config') }}">
+                        <input type="hidden" name="action" value="update_colors">
+
+                        <div class="row g-3">
+                            {% set color_fields = [
+                                ('primary', 'Primary Color', '#00F6FF'),
+                                ('primary_dark', 'Primary Dark', '#0047FF'),
+                                ('secondary', 'Secondary', '#B896FF'),
+                                ('background', 'Background', '#060606'),
+                                ('card_bg', 'Card Background', '#060606'),
+                                ('text_primary', 'Text Primary', '#FBFAFA'),
+                                ('text_secondary', 'Text Secondary', '#7BA8FF'),
+                                ('border', 'Border', '#0047FF'),
+                                ('accent', 'Accent', '#00FFF0'),
+                                ('why_it_matters_bg', 'Why It Matters BG', '#060606'),
+                                ('why_it_matters_text', 'Why It Matters Text', '#00FFF0')
+                            ] %}
+
+                            {% for field_name, label, default in color_fields %}
+                                <div class="col-md-4 col-lg-3">
+                                    <label class="form-label">{{ label }}</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color color-preview"
+                                               id="preview_{{ field_name }}"
+                                               value="{{ email_colors.get(field_name, default) }}"
+                                               onchange="document.getElementById('color_{{ field_name }}').value = this.value">
+                                        <input type="text" class="form-control"
+                                               name="color_{{ field_name }}"
+                                               id="color_{{ field_name }}"
+                                               value="{{ email_colors.get(field_name, default) }}"
+                                               pattern="^#[0-9A-Fa-f]{6}$"
+                                               onchange="document.getElementById('preview_{{ field_name }}').value = this.value">
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary mt-4">
+                            <i class="bi bi-check-circle me-1"></i>Save Colors
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- LLM Settings (Read-only) -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cpu me-2"></i>LLM Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Ollama Base URL</label>
+                            <input type="text" class="form-control"
+                                   value="{{ config.get('OLLAMA_BASE_URL', '') }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Model</label>
+                            <input type="text" class="form-control"
+                                   value="{{ config.get('OLLAMA_MODEL', '') }}" readonly>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        LLM settings should be configured directly in <code>config.yml</code> or use the Raw Config editor.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

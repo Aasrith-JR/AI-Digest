@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - AI-Digest{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 mb-4">
+            <div class="card">
+                <div class="card-body p-2">
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>Overview
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">
+                            <i class="bi bi-people me-2"></i>Users
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_pipelines') }}">
+                            <i class="bi bi-gear me-2"></i>Pipelines
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_config') }}">
+                            <i class="bi bi-sliders me-2"></i>Configuration
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_run_digest') }}">
+                            <i class="bi bi-play-circle me-2"></i>Run Digest
+                        </a>
+                        <hr class="my-2">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-arrow-left me-2"></i>Back to App
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="bi bi-shield-lock text-primary me-2"></i>Admin Dashboard
+                </h2>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="text-secondary mb-1">Total Users</p>
+                                <h3 class="mb-0">{{ users|length }}</h3>
+                            </div>
+                            <i class="bi bi-people text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="text-secondary mb-1">Verified Users</p>
+                                <h3 class="mb-0">{{ users|selectattr('is_verified')|list|length }}</h3>
+                            </div>
+                            <i class="bi bi-person-check text-accent" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="text-secondary mb-1">Active Pipelines</p>
+                                <h3 class="mb-0">{{ pipelines.values()|selectattr('enabled')|list|length }}</h3>
+                            </div>
+                            <i class="bi bi-gear text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="text-secondary mb-1">Admins</p>
+                                <h3 class="mb-0">{{ users|selectattr('is_admin')|list|length }}</h3>
+                            </div>
+                            <i class="bi bi-shield-check text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Recent Users -->
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-people me-2"></i>Recent Users
+                            </h5>
+                            <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-outline-primary">
+                                View All
+                            </a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Email</th>
+                                            <th>Status</th>
+                                            <th>Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users[:5] %}
+                                            <tr>
+                                                <td>{{ user.email }}</td>
+                                                <td>
+                                                    {% if user.is_verified %}
+                                                        <span class="badge bg-success">Verified</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">Pending</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if user.is_admin %}
+                                                        <span class="badge bg-gradient-primary">Admin</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">User</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3" class="text-center text-secondary">No users yet</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pipelines -->
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-gear me-2"></i>Pipelines
+                            </h5>
+                            <a href="{{ url_for('admin_pipelines') }}" class="btn btn-sm btn-outline-primary">
+                                Manage
+                            </a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Status</th>
+                                            <th>Top K</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for name, pipeline in pipelines.items() %}
+                                            <tr>
+                                                <td>{{ name.replace('_', ' ').title() }}</td>
+                                                <td>
+                                                    {% if pipeline.get('enabled', True) %}
+                                                        <span class="badge bg-success">Enabled</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Disabled</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ pipeline.get('ingestion', {}).get('top_k', 5) }}</td>
+                                            </tr>
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3" class="text-center text-secondary">No pipelines configured</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Settings -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-sliders me-2"></i>Quick Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-between p-3 border rounded">
+                                <div>
+                                    <strong>Email Delivery</strong>
+                                    <p class="text-secondary mb-0 small">{{ config.get('EMAIL_SMTP_HOST', 'Not configured') }}</p>
+                                </div>
+                                {% if config.get('EMAIL_ENABLED') == 'true' or config.get('EMAIL_ENABLED') == True %}
+                                    <span class="badge bg-success">Enabled</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Disabled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-between p-3 border rounded">
+                                <div>
+                                    <strong>Telegram Delivery</strong>
+                                    <p class="text-secondary mb-0 small">Bot integration</p>
+                                </div>
+                                {% if config.get('TELEGRAM_ENABLED') == 'true' or config.get('TELEGRAM_ENABLED') == True %}
+                                    <span class="badge bg-success">Enabled</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Disabled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-between p-3 border rounded">
+                                <div>
+                                    <strong>LLM Model</strong>
+                                    <p class="text-secondary mb-0 small">{{ config.get('OLLAMA_MODEL', 'Not configured') }}</p>
+                                </div>
+                                <span class="badge bg-primary">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

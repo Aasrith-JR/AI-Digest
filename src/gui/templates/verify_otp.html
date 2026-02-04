@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Email - AI-Digest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header text-center py-4">
+                    <h3 class="mb-0">
+                        <i class="bi bi-shield-check text-primary me-2"></i>Verify Your Email
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-center text-secondary mb-4">
+                        We've sent a 6-digit verification code to<br>
+                        <strong class="text-primary">{{ email }}</strong>
+                    </p>
+
+                    <form method="POST" action="{{ url_for('verify_otp') }}">
+                        <input type="hidden" name="email" value="{{ email }}">
+                        <input type="hidden" name="purpose" value="{{ purpose }}">
+
+                        <div class="mb-4">
+                            <label for="otp" class="form-label text-center d-block">Enter Verification Code</label>
+                            <input type="text" class="form-control otp-input" id="otp"
+                                   name="otp" placeholder="000000" maxlength="6"
+                                   pattern="[0-9]{6}" required autocomplete="one-time-code">
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>Verify
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="text-secondary mb-2">Didn't receive the code?</p>
+                        <form method="POST" action="{{ url_for('resend_otp') }}" class="d-inline">
+                            <input type="hidden" name="email" value="{{ email }}">
+                            <input type="hidden" name="purpose" value="{{ purpose }}">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-repeat me-1"></i>Resend Code
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <a href="{{ url_for('register') }}" class="text-primary text-decoration-none">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Registration
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-focus and format OTP input
+    const otpInput = document.getElementById('otp');
+    otpInput.focus();
+
+    otpInput.addEventListener('input', function(e) {
+        // Remove non-digits
+        this.value = this.value.replace(/\D/g, '');
+
+        // Auto-submit when 6 digits entered
+        if (this.value.length === 6) {
+            this.form.submit();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,57 +1,26 @@
-# Core
-DATABASE_PATH: "data/app.db"
-FAISS_INDEX_PATH: "data/faiss.index"
-
-# Ollama
+DATABASE_PATH: data/app.db
+FAISS_INDEX_PATH: data/faiss.index
 OLLAMA_BASE_URL: http://localhost:11434/v1
 OLLAMA_MODEL: llama3.1:8b
-
-# Thresholds (legacy - now configured per-pipeline)
 GENAI_NEWS_MIN_RELEVANCE: 0.4
 PRODUCT_IDEAS_MIN_REUSABILITY: 0.5
-
-# Telegram Delivery
-TELEGRAM_ENABLED: "false"
-
-# Email Delivery
-EMAIL_ENABLED: "true"
+TELEGRAM_ENABLED: 'false'
+EMAIL_ENABLED: 'true'
 EMAIL_SMTP_HOST: smtp.gmail.com
 EMAIL_SMTP_PORT: 587
-EMAIL_FROM: cosmicnebula25@gmail.com
-EMAIL_TO: cosmicnebula2004@gmail.com
-
-# Email Template Colors (customize your email appearance)
+EMAIL_FROM: cosmicnebula25@gmail.com # Use your email here
 email_colors:
-  primary: "#00F6FF"           # Cyan - Main accent color (header, badges, links)
-  primary_dark: "#0047FF"      # Deep blue - Darker shade for gradients
-  secondary: "#B896FF"         # Purple - Secondary accent (fallback badge color)
-  background: "#060606"        # Near black - Page background
-  card_bg: "#060606"           # Near black - Card background
-  text_primary: "#FBFAFA"      # Off white - Main text color
-  text_secondary: "#7BA8FF"    # Light blue - Secondary text (footer, meta)
-  border: "#0047FF"            # Deep blue - Border color
-  accent: "#00FFF0"            # Bright cyan - Highlight accent (why it matters border)
-  why_it_matters_bg: "#060606" # Near black - Why it matters box background
-  why_it_matters_text: "#00FFF0" # Bright cyan - Why it matters text color
-
-
-
-# ============================================
-# PIPELINES CONFIGURATION
-# ============================================
-# Each pipeline is fully self-contained and modular.
-# Add new pipelines by creating a new entry under 'pipelines:'
-#
-# Pipeline fields:
-#   enabled: true/false - whether to run this pipeline
-#   persona: GENAI_NEWS or PRODUCT_IDEAS (must match ALL_PERSONAS)
-#   fetch_hours: how far back to fetch items (default: 24)
-#   default_audience: fallback audience value
-#   score_field: which evaluation field to use for scoring
-#   why_it_matters_field: field(s) for why_it_matters (string or list)
-#   why_it_matters_fallback: fallback text if field is empty
-#   ingestion: sources, keywords, min_engagement, top_k
-
+  primary: '#00F6FF'
+  primary_dark: '#0047FF'
+  secondary: '#B896FF'
+  background: '#060606'
+  card_bg: '#060606'
+  text_primary: '#FBFAFA'
+  text_secondary: '#7BA8FF'
+  border: '#0047FF'
+  accent: '#00FFF0'
+  why_it_matters_bg: '#060606'
+  why_it_matters_text: '#00FFF0'
 pipelines:
   genai_news:
     enabled: true
@@ -60,88 +29,28 @@ pipelines:
     default_audience: developer
     score_field: relevance_score
     why_it_matters_field: why_it_matters
-    why_it_matters_fallback: "Relevant update in the GenAI ecosystem."
+    why_it_matters_fallback: Relevant update in the GenAI ecosystem.
     ingestion:
       top_k: 5
       sources:
-        - type: reddit
-          enabled: true
-          subreddit: MachineLearning
-        - type: reddit
-          enabled: true
-          subreddit: LocalLLaMA
-        - type: rss
-          enabled: true
-          name: genai_rss
-          feeds:
-            - https://www.lesswrong.com/feed.xml
-            - https://www.semianalysis.com/feed
-        - type: hackernews
-          enabled: false
-      keywords:
-        - llm
-        - transformer
-        - inference
-        - quantization
-        - agents
-        - ollama
-        - faiss
-        - gpu
-      min_engagement: 5
-
-  product_ideas:
-    enabled: true
-    persona: PRODUCT_IDEAS
-    fetch_hours: 24
-    default_audience: founder
-    score_field: reusability_score
-    why_it_matters_field:
-      - problem_statement
-      - solution_summary
-    why_it_matters_fallback: "Potential product opportunity."
-    ingestion:
-      top_k: 5
-      sources:
-        - type: producthunt
-          enabled: true
-        - type: reddit
-          enabled: true
-          subreddit: SideProject
-      keywords:
-        - launched
-        - built
-        - mvp
-        - experiment
-        - users
-        - revenue
-        - problem
-        - pain
-      min_engagement: 3
-
-
-# ============================================
-# LEGACY INGESTION (kept for backwards compatibility)
-# ============================================
-# You can still use this format, but 'pipelines' section above is preferred.
-ingestion:
-  genai_news:
-    top_k: 5
-    sources:
-      - type: reddit
-        enabled: true
+      - enabled: true
         subreddit: MachineLearning
-      - type: reddit
-        enabled: true
+        type: reddit
+      - enabled: true
         subreddit: LocalLLaMA
-      - type: rss
-        enabled: true
-        name: genai_rss
+        type: reddit
+      - enabled: true
+        subreddit: computing
+        type: reddit
+      - enabled: true
         feeds:
-          - https://www.lesswrong.com/feed.xml
-          - https://www.semianalysis.com/feed
-      - type: hackernews
-        enabled: false
-    keywords:
+        - https://www.lesswrong.com/feed.xml
+        - https://www.semianalysis.com/feed
+        name: genai_rss
+        type: rss
+      - enabled: false
+        type: hackernews
+      keywords:
       - llm
       - transformer
       - inference
@@ -150,17 +59,26 @@ ingestion:
       - ollama
       - faiss
       - gpu
-    min_engagement: 5
-
+      min_engagement: 5
   product_ideas:
-    top_k: 5
-    sources:
+    enabled: true
+    persona: PRODUCT_IDEAS
+    fetch_hours: 24
+    default_audience: founder
+    score_field: reusability_score
+    why_it_matters_field:
+    - problem_statement
+    - solution_summary
+    why_it_matters_fallback: Potential product opportunity.
+    ingestion:
+      top_k: 5
+      sources:
       - type: producthunt
         enabled: true
       - type: reddit
         enabled: true
         subreddit: SideProject
-    keywords:
+      keywords:
       - launched
       - built
       - mvp
@@ -169,5 +87,50 @@ ingestion:
       - revenue
       - problem
       - pain
+      min_engagement: 3
+ingestion:
+  genai_news:
+    top_k: 5
+    sources:
+    - type: reddit
+      enabled: true
+      subreddit: MachineLearning
+    - type: reddit
+      enabled: true
+      subreddit: LocalLLaMA
+    - type: rss
+      enabled: true
+      name: genai_rss
+      feeds:
+      - https://www.lesswrong.com/feed.xml
+      - https://www.semianalysis.com/feed
+    - type: hackernews
+      enabled: false
+    keywords:
+    - llm
+    - transformer
+    - inference
+    - quantization
+    - agents
+    - ollama
+    - faiss
+    - gpu
+    min_engagement: 5
+  product_ideas:
+    top_k: 5
+    sources:
+    - type: producthunt
+      enabled: true
+    - type: reddit
+      enabled: true
+      subreddit: SideProject
+    keywords:
+    - launched
+    - built
+    - mvp
+    - experiment
+    - users
+    - revenue
+    - problem
+    - pain
     min_engagement: 3
-

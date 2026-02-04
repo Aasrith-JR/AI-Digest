@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Pipeline - AI-Digest Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 mb-4">
+            <div class="card">
+                <div class="card-body p-2">
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>Overview
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">
+                            <i class="bi bi-people me-2"></i>Users
+                        </a>
+                        <a class="nav-link active" href="{{ url_for('admin_pipelines') }}">
+                            <i class="bi bi-gear me-2"></i>Pipelines
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_config') }}">
+                            <i class="bi bi-sliders me-2"></i>Configuration
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin_run_digest') }}">
+                            <i class="bi bi-play-circle me-2"></i>Run Digest
+                        </a>
+                        <hr class="my-2">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-arrow-left me-2"></i>Back to App
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="bi bi-pencil text-primary me-2"></i>Edit Pipeline: {{ name.replace('_', ' ').title() }}
+                </h2>
+                <a href="{{ url_for('admin_pipelines') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+
+            <form method="POST" action="{{ url_for('edit_pipeline', name=name) }}">
+                <div class="row g-4">
+                    <!-- Basic Settings -->
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-gear me-2"></i>Basic Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select name="enabled" class="form-select">
+                                        <option value="true" {% if pipeline.get('enabled', True) %}selected{% endif %}>Enabled</option>
+                                        <option value="false" {% if not pipeline.get('enabled', True) %}selected{% endif %}>Disabled</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Persona</label>
+                                    <select name="persona" class="form-select">
+                                        {% for p_name in ALL_PERSONAS.keys() %}
+                                            <option value="{{ p_name }}" {% if pipeline.get('persona') == p_name %}selected{% endif %}>
+                                                {{ p_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Fetch Hours</label>
+                                    <input type="number" name="fetch_hours" class="form-control"
+                                           value="{{ pipeline.get('fetch_hours', 24) }}" min="1" max="168">
+                                    <div class="form-text text-secondary">How far back to fetch items (hours)</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Default Audience</label>
+                                    <input type="text" name="default_audience" class="form-control"
+                                           value="{{ pipeline.get('default_audience', 'developer') }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Score Field</label>
+                                    <input type="text" name="score_field" class="form-control"
+                                           value="{{ pipeline.get('score_field', 'relevance_score') }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingestion Settings -->
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-funnel me-2"></i>Ingestion Settings
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Top K</label>
+                                    <input type="number" name="top_k" class="form-control"
+                                           value="{{ pipeline.get('ingestion', {}).get('top_k', 5) }}" min="1" max="50">
+                                    <div class="form-text text-secondary">Number of top digests to select</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Min Engagement</label>
+                                    <input type="number" name="min_engagement" class="form-control"
+                                           value="{{ pipeline.get('ingestion', {}).get('min_engagement', 5) }}" min="0">
+                                    <div class="form-text text-secondary">Minimum engagement score to consider</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Keywords (comma-separated)</label>
+                                    <textarea name="keywords" class="form-control" rows="3">{{ pipeline.get('ingestion', {}).get('keywords', [])|join(', ') }}</textarea>
+                                    <div class="form-text text-secondary">Keywords for content filtering</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Why It Matters Field</label>
+                                    <input type="text" name="why_it_matters_field" class="form-control"
+                                           value="{{ pipeline.get('why_it_matters_field', 'why_it_matters') }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Why It Matters Fallback</label>
+                                    <input type="text" name="why_it_matters_fallback" class="form-control"
+                                           value="{{ pipeline.get('why_it_matters_fallback', '') }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sources Editor -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0"><i class="bi bi-database me-2"></i>Sources</h5>
+                        <span class="badge bg-secondary">Edit as JSON</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Enter sources as a JSON array. Example:
+                            <pre class="bg-dark p-3 rounded small mb-0"><code>[{
+  "type": "reddit",
+  "subreddit": "MachineLearning",
+  "enabled": true
+}, {
+  "type": "rss",
+  "url": "https://example.com/feed.xml",
+  "name": "Example Feed",
+  "enabled": true
+}]</code></pre>
+                        </div>
+                        <textarea name="sources_json" class="form-control" rows="10">{{ pipeline.get('ingestion', {}).get('sources', []) | tojson(indent=2) }}</textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    <a href="{{ url_for('admin_pipelines') }}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

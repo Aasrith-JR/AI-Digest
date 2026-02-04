@@ -11,9 +11,9 @@ from services.digest_tracker import DigestTracker
 from services.llm import OllamaClient
 from workflows.pipeline_factory import create_pipelines_from_config
 from delivery.file_delivery import FileDelivery
-from delivery.email_delivery import EmailDelivery
 from delivery.telegram_delivery import TelegramDelivery
 from delivery.base import DeliveryChannel
+from gui.multi_user_delivery import HybridEmailDelivery
 
 
 async def main() -> None:
@@ -33,6 +33,14 @@ async def main() -> None:
         base_url=config.OLLAMA_BASE_URL,
         model=config.OLLAMA_MODEL,
     )
+
+    # Preflight health check for Ollama connectivity
+    if not await llm.health_check():
+        logger.error(
+            "Ollama is not reachable. Please ensure ollama serve is running, base URL is correct, and the model is pulled. "
+            f"Configured base_url={config.OLLAMA_BASE_URL}, model={config.OLLAMA_MODEL}"
+        )
+        return
 
     db = Database(config.DATABASE_PATH)
     vector_store = VectorStore(config.FAISS_INDEX_PATH)
@@ -68,13 +76,13 @@ async def main() -> None:
 
     if config.EMAIL_ENABLED:
         deliveries.append(
-            EmailDelivery(
+            HybridEmailDelivery(
                 smtp_host=config.EMAIL_SMTP_HOST,
                 smtp_port=config.EMAIL_SMTP_PORT,
                 username=config.EMAIL_USERNAME,
                 password=config.EMAIL_PASSWORD,
                 sender=config.EMAIL_FROM,
-                recipient=config.EMAIL_TO,
+                legacy_recipient=config.EMAIL_TO,
                 colors=config.email_colors.model_dump(),
             )
         )

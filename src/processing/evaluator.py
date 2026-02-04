@@ -185,3 +185,22 @@ JSON array:"""
 
     logger.info(f"Evaluation complete: {len(results)} items selected")
     return results[:actual_k]  # Ensure we return at most actual_k (never more than available items)
+
+
+def select_top_k(entries: List, top_k: int) -> List:
+    """Select up to top_k unique entries.
+    If entries count is less than top_k, do not duplicate; just return available unique entries.
+    Uniqueness is determined by (title, first_source_url) fallback.
+    """
+    seen = set()
+    unique = []
+    for e in entries:
+        key = (getattr(e, 'title', None), (e.source_urls[0] if getattr(e, 'source_urls', []) else None))
+        if key not in seen:
+            seen.add(key)
+            unique.append(e)
+        if len(unique) >= top_k:
+            break
+    if len(unique) < top_k:
+        logger.info(f"Available unique entries {len(unique)} < requested top_k {top_k}; returning unique list without duplication")
+    return unique

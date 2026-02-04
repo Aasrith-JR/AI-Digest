@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +31,14 @@ class OllamaClient:
         elif base_url.endswith("/v1/"):
             base_url = base_url[:-4]
 
-        self.base_url = base_url
+        self.base_url = base_url.rstrip('/')
         self.model = model
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.timeout = timeout
 
         self.llm = ChatOllama(
-            base_url=base_url,
+            base_url=self.base_url,
             model=model,
             temperature=temperature,
             num_ctx=4096,  # Context window size
@@ -72,14 +73,16 @@ class OllamaClient:
                 # Check for connection errors
                 if "connection" in error_msg.lower() or "connect" in error_msg.lower():
                     logger.warning(
-                        f"Attempt {attempt}/{self.max_retries}: Connection error - {error_msg}"
+                        f"Attempt {attempt}/{self.max_retries}: Connection error - {error_msg} (base_url={self.base_url}, model={self.model})"
                     )
                 else:
                     # For non-connection errors, don't retry
                     raise
 
             if attempt < self.max_retries:
-                await asyncio.sleep(self.retry_delay * attempt)
+                # Exponential backoff with jitter
+                delay = self.retry_delay * attempt
+                await asyncio.sleep(delay)
 
         raise last_exception or Exception("All connection attempts failed")
 
@@ -115,15 +118,17 @@ Summary:"""
 
     async def health_check(self) -> bool:
         """
-        Check if the Ollama server is reachable.
+        Check if the Ollama server is reachable by calling /api/tags.
         """
+        url = f"{self.base_url}/api/tags"
         try:
-            await asyncio.wait_for(
-                self.llm.ainvoke([HumanMessage(content="Hi")]),
-                timeout=10.0,
-            )
-            return True
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    return True
+                logger.error(f"Ollama health check failed: {resp.status_code} {resp.text}")
+                return False
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.error(f"Ollama health check error: {e} (url={url})")
             return False
 

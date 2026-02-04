@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI-Digest{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="hero-section mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="bi bi-hand-wave text-primary me-2"></i>Welcome back!
+                </h2>
+                <p class="text-secondary mb-0">
+                    <i class="bi bi-envelope me-1"></i>{{ user.email }}
+                    {% if user.is_admin %}
+                        <span class="badge bg-gradient-primary ms-2">
+                            <i class="bi bi-shield-check me-1"></i>Admin
+                        </span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('manage_personas') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Manage Subscriptions
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <p class="text-secondary mb-1">Subscribed Personas</p>
+                        <h3 class="mb-0">{{ subscribed|selectattr('1')|list|length }}</h3>
+                    </div>
+                    <div>
+                        <i class="bi bi-person-badge text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <p class="text-secondary mb-1">Available Personas</p>
+                        <h3 class="mb-0">{{ available_personas|length }}</h3>
+                    </div>
+                    <div>
+                        <i class="bi bi-collection text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <p class="text-secondary mb-1">Account Status</p>
+                        <h3 class="mb-0 text-accent">Active</h3>
+                    </div>
+                    <div>
+                        <i class="bi bi-check-circle text-accent" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Subscriptions -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-bell-fill text-primary me-2"></i>Your Active Subscriptions
+            </h5>
+        </div>
+        <div class="card-body">
+            {% set active_subscriptions = subscribed.items()|selectattr('1')|list %}
+            {% if active_subscriptions %}
+                <div class="row g-3">
+                    {% for persona_name, is_active in subscribed.items() %}
+                        {% if is_active %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card persona-card selected h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-newspaper text-primary me-2" style="font-size: 1.5rem;"></i>
+                                            <h6 class="mb-0">{{ persona_name.replace('_', ' ').title() }}</h6>
+                                        </div>
+                                        {% if persona_name.upper() in ALL_PERSONAS %}
+                                            <p class="text-secondary small mb-0">
+                                                {{ ALL_PERSONAS[persona_name.upper()].description }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox text-secondary" style="font-size: 3rem;"></i>
+                    <p class="text-secondary mt-3 mb-0">You haven't subscribed to any personas yet.</p>
+                    <a href="{{ url_for('manage_personas') }}" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-circle me-1"></i>Subscribe Now
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning text-primary me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('manage_personas') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person-badge me-2"></i>Manage Persona Subscriptions
+                        </a>
+                        <a href="{{ url_for('profile') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person-gear me-2"></i>Update Profile Settings
+                        </a>
+                        {% if user.is_admin %}
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-shield-lock me-2"></i>Admin Dashboard
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle text-primary me-2"></i>About AI-Digest
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-secondary">
+                        AI-Digest curates the most relevant content from various sources including
+                        Reddit, Hacker News, Product Hunt, and RSS feeds.
+                    </p>
+                    <p class="text-secondary mb-0">
+                        Subscribe to personas that match your interests and receive personalized
+                        digest emails with AI-curated content.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
