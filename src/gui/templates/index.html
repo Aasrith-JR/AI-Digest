@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Digest - Intelligence Digest Platform{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="hero-section text-center">
+        <h1 class="display-4 fw-bold mb-4 glow-text">
+            <i class="bi bi-cpu text-primary me-3"></i>AI Intelligence Digest
+        </h1>
+        <p class="lead mb-4 text-secondary">
+            Stay ahead with curated AI news, product ideas, and insights delivered directly to your inbox.
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-rocket-takeoff me-2"></i>Get Started
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-5">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+            </a>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row g-4 my-5">
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="bi bi-newspaper text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Curated Content</h5>
+                    <p class="card-text text-secondary">
+                        AI-powered curation from Reddit, Hacker News, Product Hunt, and RSS feeds.
+                        Only the most relevant content makes it to your digest.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="bi bi-person-badge text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Multiple Personas</h5>
+                    <p class="card-text text-secondary">
+                        Subscribe to different personas based on your interests.
+                        GenAI News for developers, Product Ideas for founders, and more.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="bi bi-envelope-check text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="card-title">Email Delivery</h5>
+                    <p class="card-text text-secondary">
+                        Beautiful, responsive email digests delivered daily.
+                        Never miss important updates in the AI ecosystem.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How it Works Section -->
+    <div class="text-center my-5">
+        <h2 class="mb-4">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="mb-2">
+                        <i class="bi bi-1-circle text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5>Register</h5>
+                    <p class="text-secondary mb-0">Create your account with email verification</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="mb-2">
+                        <i class="bi bi-2-circle text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5>Choose Personas</h5>
+                    <p class="text-secondary mb-0">Select the content types you want to receive</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="mb-2">
+                        <i class="bi bi-3-circle text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5>AI Curation</h5>
+                    <p class="text-secondary mb-0">Our AI filters and summarizes the best content</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="mb-2">
+                        <i class="bi bi-4-circle text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5>Get Digest</h5>
+                    <p class="text-secondary mb-0">Receive curated digests in your inbox</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="hero-section text-center my-5">
+        <h2 class="mb-3">Ready to Stay Ahead?</h2>
+        <p class="text-secondary mb-4">Join now and get personalized AI intelligence digests.</p>
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-person-plus me-2"></i>Create Free Account
+        </a>
+    </div>
+</div>
+{% endblock %}

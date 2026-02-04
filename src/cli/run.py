@@ -1,19 +1,23 @@
 import asyncio
 from datetime import date
 import logging
+import time
 
-from ingestion.reddit import RedditAdapter
 from services.config import load_config
 from services.logging import setup_logging
-from workflows.genai_news import GenAINewsPipeline
-from workflows.product_ideas import ProductIdeasPipeline
+from services.database import Database
+from services.vector_store import VectorStore
+from services.digest_tracker import DigestTracker
+from services.llm import OllamaClient
+from workflows.pipeline_factory import create_pipelines_from_config
 from delivery.file_delivery import FileDelivery
-from delivery.email_delivery import EmailDelivery
 from delivery.telegram_delivery import TelegramDelivery
 from delivery.base import DeliveryChannel
+from gui.multi_user_delivery import HybridEmailDelivery
 
 
 async def main() -> None:
+    start_time = time.perf_counter()
     setup_logging()
     logger = logging.getLogger(__name__)
 
@@ -22,30 +26,64 @@ async def main() -> None:
 
     logger.info("Starting intelligence digest run")
 
-    pipelines = []
+    # ----------------------------
+    # Initialize shared services
+    # ----------------------------
+    llm = OllamaClient(
+        base_url=config.OLLAMA_BASE_URL,
+        model=config.OLLAMA_MODEL,
+    )
 
-    if config.PERSONA_GENAI_NEWS_ENABLED:
-        pipelines.append(GenAINewsPipeline())
+    # Preflight health check for Ollama connectivity
+    if not await llm.health_check():
+        logger.error(
+            "Ollama is not reachable. Please ensure ollama serve is running, base URL is correct, and the model is pulled. "
+            f"Configured base_url={config.OLLAMA_BASE_URL}, model={config.OLLAMA_MODEL}"
+        )
+        return
 
-    if config.PERSONA_PRODUCT_IDEAS_ENABLED:
-        pipelines.append(ProductIdeasPipeline())
+    db = Database(config.DATABASE_PATH)
+    vector_store = VectorStore(config.FAISS_INDEX_PATH)
+    tracker = DigestTracker(db, vector_store)
+
+    # ----------------------------
+    # Create pipelines from config
+    # ----------------------------
+    if config.pipelines:
+        # Use new modular pipeline configuration
+        pipelines = create_pipelines_from_config(
+            pipelines_config=config.pipelines,
+            llm=llm,
+            tracker=tracker,
+        )
+        logger.info(f"Created {len(pipelines)} pipelines from config")
+    else:
+        # Fallback to legacy pipeline configuration
+        logger.warning("No pipelines configured, using legacy configuration")
+        from workflows.genai_news import GenAINewsPipeline
+        from workflows.product_ideas import ProductIdeasPipeline
+
+        pipelines = []
+        if config.PERSONA_GENAI_NEWS_ENABLED:
+            pipelines.append(GenAINewsPipeline(llm=llm, tracker=tracker))
+        if config.PERSONA_PRODUCT_IDEAS_ENABLED:
+            pipelines.append(ProductIdeasPipeline(llm=llm, tracker=tracker))
 
     # ----------------------------
     # Initialize delivery channels
     # ----------------------------
     deliveries = list[DeliveryChannel]([FileDelivery()])
 
-    logger.info(config)
-
     if config.EMAIL_ENABLED:
         deliveries.append(
-            EmailDelivery(
+            HybridEmailDelivery(
                 smtp_host=config.EMAIL_SMTP_HOST,
                 smtp_port=config.EMAIL_SMTP_PORT,
                 username=config.EMAIL_USERNAME,
                 password=config.EMAIL_PASSWORD,
                 sender=config.EMAIL_FROM,
-                recipient=config.EMAIL_TO,
+                legacy_recipient=config.EMAIL_TO,
+                colors=config.email_colors.model_dump(),
             )
         )
 
@@ -69,8 +107,6 @@ async def main() -> None:
                 logger.info(f"No entries for persona {pipeline.name}")
                 continue
 
-            logger.warning(entries)
-
             for delivery in deliveries:
                 try:
                     await delivery.deliver(
@@ -90,6 +126,8 @@ async def main() -> None:
             logger.exception(f"Pipeline failed: {pipeline.name}: {e}")
 
     logger.info("Digest run completed")
+    end_time = time.perf_counter()
+    logger.info(f"Total time: {end_time - start_time}")
 
 
 if __name__ == "__main__":

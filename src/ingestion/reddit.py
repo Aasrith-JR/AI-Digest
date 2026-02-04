@@ -17,7 +17,7 @@ class RedditAdapter(SourceAdapter):
         try:
             async with httpx.AsyncClient(timeout=30, headers=headers) as client:
                 resp = await client.get(
-                    f"https://www.reddit.com/r/{self.subreddit}/new.json?limit=50"
+                    f"https://www.reddit.com/r/{self.subreddit}/new.json?limit=100"
                 )
                 resp.raise_for_status()
 
