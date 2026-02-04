@@ -1,4 +1,3 @@
-# src/delivery/telegram.py
 from typing import List
 from telegram import Bot
 

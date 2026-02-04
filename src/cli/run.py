@@ -1,8 +1,8 @@
 import asyncio
 from datetime import date
 import logging
+import time
 
-from ingestion.reddit import RedditAdapter
 from services.config import load_config
 from services.logging import setup_logging
 from workflows.genai_news import GenAINewsPipeline
@@ -14,6 +14,7 @@ from delivery.base import DeliveryChannel
 
 
 async def main() -> None:
+    start_time = time.perf_counter()
     setup_logging()
     logger = logging.getLogger(__name__)
 
@@ -34,8 +35,6 @@ async def main() -> None:
     # Initialize delivery channels
     # ----------------------------
     deliveries = list[DeliveryChannel]([FileDelivery()])
-
-    logger.info(config)
 
     if config.EMAIL_ENABLED:
         deliveries.append(
@@ -69,8 +68,6 @@ async def main() -> None:
                 logger.info(f"No entries for persona {pipeline.name}")
                 continue
 
-            logger.warning(entries)
-
             for delivery in deliveries:
                 try:
                     await delivery.deliver(
@@ -90,6 +87,8 @@ async def main() -> None:
             logger.exception(f"Pipeline failed: {pipeline.name}: {e}")
 
     logger.info("Digest run completed")
+    end_time = time.perf_counter()
+    logger.info(f"Total time: {end_time - start_time}")
 
 
 if __name__ == "__main__":

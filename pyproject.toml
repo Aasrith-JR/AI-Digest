@@ -10,7 +10,9 @@ dependencies = [
     "faiss-cpu",
     "numpy",
     "python-telegram-bot",
-    "aiosmtplib"
+    "aiosmtplib",
+    "langchain-ollama",
+    "langchain-core"
 ]
 
 [tool.setuptools]

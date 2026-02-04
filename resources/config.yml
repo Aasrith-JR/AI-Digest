@@ -4,7 +4,7 @@ FAISS_INDEX_PATH: "data/faiss.index"
 
 # Ollama
 OLLAMA_BASE_URL: http://localhost:11434/v1
-OLLAMA_MODEL: llama3:8b
+OLLAMA_MODEL: llama3.1:8b
 
 # Personas
 PERSONA_GENAI_NEWS_ENABLED: "true"
@@ -17,11 +17,62 @@ PRODUCT_IDEAS_MIN_REUSABILITY: 0.5
 # Telegram Delivery
 TELEGRAM_ENABLED: "false"
 
-#Email Delivery
+# Email Delivery
 EMAIL_ENABLED: "true"
-
 EMAIL_SMTP_HOST: smtp.gmail.com
 EMAIL_SMTP_PORT: 587
-
 EMAIL_FROM: cosmicnebula25@gmail.com
 EMAIL_TO: cosmicnebula2004@gmail.com
+
+
+
+# Ingestion Sources Configuration
+# Each source has: type, enabled, and type-specific settings
+ingestion:
+  genai_news:
+    top_k: 3  # Number of top digests to select
+    sources:
+      - type: reddit
+        enabled: true
+        subreddit: MachineLearning
+      - type: reddit
+        enabled: true
+        subreddit: LocalLLaMA
+      - type: rss
+        enabled: true
+        name: genai_rss
+        feeds:
+          - https://www.lesswrong.com/feed.xml
+          - https://www.semianalysis.com/feed
+      - type: hackernews
+        enabled: true
+    keywords:
+      - llm
+      - transformer
+      - inference
+      - quantization
+      - agents
+      - ollama
+      - faiss
+      - gpu
+    min_engagement: 5
+
+  product_ideas:
+    top_k: 3  # Number of top digests to select
+    sources:
+      - type: producthunt
+        enabled: true
+      - type: reddit
+        enabled: true
+        subreddit: SideProject
+    keywords:
+      - launched
+      - built
+      - mvp
+      - experiment
+      - users
+      - revenue
+      - problem
+      - pain
+    min_engagement: 3
+
